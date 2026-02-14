@@ -9,30 +9,21 @@ export default function Home() {
   const [userName, setUserName] = useState("");
   const [status, setStatus] = useState("Disconnected");
   const [room, setRoom] = useState<any>(null);
-  const [participants, setParticipants] = useState<string[]>([]);
   const [enableVideo, setEnableVideo] = useState(true);
   const [enableAudio, setEnableAudio] = useState(true);
   const [localTracks, setLocalTracks] = useState<any[]>([]);
   const [notification, setNotification] = useState("");
 
   const localVideoRef = useRef<HTMLDivElement>(null);
-  const remoteVideoRef = useRef<HTMLDivElement>(null);
+  const remoteVideoContainerRef = useRef<HTMLDivElement>(null);
 
   // ---------------- CONNECT ----------------
   const connectToRoom = async () => {
     try {
-      if (room) {
-        alert("Already connected!");
-        return;
-      }
+      if (room) return;
 
-      if (!roomName) {
-        alert("Please enter room name");
-        return;
-      }
-
-      if (!userName) {
-        alert("Please enter your name");
+      if (!roomName || !userName) {
+        alert("Enter name and room");
         return;
       }
 
@@ -46,8 +37,7 @@ export default function Home() {
       setLocalTracks(tracks);
 
       const response = await axios.post(
-        "https://video-app-rz9w.onrender.com/generate-token"
-,
+        "https://video-app-rz9w.onrender.com/generate-token",
         {
           identity: userName,
           roomName,
@@ -64,54 +54,34 @@ export default function Home() {
       setRoom(connectedRoom);
       setStatus("Connected");
 
-      // Clear previous video containers
-      if (localVideoRef.current) localVideoRef.current.innerHTML = "";
-      if (remoteVideoRef.current) remoteVideoRef.current.innerHTML = "";
-
       // Attach local video
-      tracks.forEach((track: any) => {
-        if (track.kind === "video") {
-          localVideoRef.current?.appendChild(track.attach());
-        }
-      });
-
-      // Existing participants
-      connectedRoom.participants.forEach((participant: any) => {
-        setParticipants((prev) => [...prev, participant.identity]);
-
-        participant.tracks.forEach((publication: any) => {
-          if (publication.isSubscribed) {
-            remoteVideoRef.current?.appendChild(
-              publication.track.attach()
-            );
+      if (localVideoRef.current) {
+        localVideoRef.current.innerHTML = "";
+        tracks.forEach((track: any) => {
+          if (track.kind === "video") {
+            localVideoRef.current?.appendChild(track.attach());
           }
         });
+      }
+
+      // Handle existing participants
+      connectedRoom.participants.forEach((participant: any) => {
+        addParticipantVideo(participant);
       });
 
       // New participant joins
       connectedRoom.on("participantConnected", (participant: any) => {
-        setParticipants((prev) => [...prev, participant.identity]);
-
-        setNotification(`${participant.identity} has joined the room`);
+        setNotification(`${participant.identity} joined`);
         setTimeout(() => setNotification(""), 3000);
 
-        participant.on("trackSubscribed", (track: any) => {
-          remoteVideoRef.current?.appendChild(track.attach());
-        });
+        addParticipantVideo(participant);
       });
 
       // Participant leaves
       connectedRoom.on("participantDisconnected", (participant: any) => {
-        setParticipants((prev) =>
-          prev.filter((name) => name !== participant.identity)
-        );
+        removeParticipantVideo(participant.identity);
 
-        // Clear remote video
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.innerHTML = "";
-        }
-
-        setNotification(`${participant.identity} has left the room`);
+        setNotification(`${participant.identity} left`);
         setTimeout(() => setNotification(""), 3000);
       });
 
@@ -121,15 +91,39 @@ export default function Home() {
     }
   };
 
+  // ---------------- ADD PARTICIPANT VIDEO ----------------
+  const addParticipantVideo = (participant: any) => {
+    const participantDiv = document.createElement("div");
+    participantDiv.setAttribute("id", participant.identity);
+    participantDiv.className = "border p-2";
+
+    participant.tracks.forEach((publication: any) => {
+      if (publication.isSubscribed) {
+        const track = publication.track;
+        participantDiv.appendChild(track.attach());
+      }
+    });
+
+    participant.on("trackSubscribed", (track: any) => {
+      participantDiv.appendChild(track.attach());
+    });
+
+    remoteVideoContainerRef.current?.appendChild(participantDiv);
+  };
+
+  // ---------------- REMOVE PARTICIPANT VIDEO ----------------
+  const removeParticipantVideo = (identity: string) => {
+    const participantDiv = document.getElementById(identity);
+    if (participantDiv) {
+      participantDiv.remove();
+    }
+  };
+
   // ---------------- TOGGLE AUDIO ----------------
   const toggleAudio = () => {
     localTracks.forEach((track) => {
       if (track.kind === "audio") {
-        if (track.isEnabled) {
-          track.disable();
-        } else {
-          track.enable();
-        }
+        track.isEnabled ? track.disable() : track.enable();
       }
     });
   };
@@ -138,11 +132,7 @@ export default function Home() {
   const toggleVideo = () => {
     localTracks.forEach((track) => {
       if (track.kind === "video") {
-        if (track.isEnabled) {
-          track.disable();
-        } else {
-          track.enable();
-        }
+        track.isEnabled ? track.disable() : track.enable();
       }
     });
   };
@@ -151,42 +141,37 @@ export default function Home() {
   const leaveRoom = () => {
     if (room) {
       room.disconnect();
+      localTracks.forEach((track) => track.stop());
 
-      localTracks.forEach((track) => {
-        track.stop();
-      });
-
-      setLocalTracks([]);
       setRoom(null);
-      setParticipants([]);
       setStatus("Disconnected");
-      setNotification("");
 
       if (localVideoRef.current) localVideoRef.current.innerHTML = "";
-      if (remoteVideoRef.current) remoteVideoRef.current.innerHTML = "";
+      if (remoteVideoContainerRef.current)
+        remoteVideoContainerRef.current.innerHTML = "";
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
+    <div className="min-h-screen flex flex-col items-center gap-4 p-4">
       <h1 className="text-3xl font-bold">Twilio Video Call App</h1>
 
       <input
         className="border p-2 w-64"
-        placeholder="Enter Your Name"
+        placeholder="Your Name"
         value={userName}
         onChange={(e) => setUserName(e.target.value)}
       />
 
       <input
         className="border p-2 w-64"
-        placeholder="Enter Room Name"
+        placeholder="Room Name"
         value={roomName}
         onChange={(e) => setRoomName(e.target.value)}
       />
 
       <div className="flex gap-4">
-        <label className="flex items-center gap-2">
+        <label>
           <input
             type="checkbox"
             checked={enableVideo}
@@ -194,11 +179,10 @@ export default function Home() {
               setEnableVideo(!enableVideo);
               toggleVideo();
             }}
-          />
-          Enable Video
+          /> Enable Video
         </label>
 
-        <label className="flex items-center gap-2">
+        <label>
           <input
             type="checkbox"
             checked={enableAudio}
@@ -206,8 +190,7 @@ export default function Home() {
               setEnableAudio(!enableAudio);
               toggleAudio();
             }}
-          />
-          Enable Audio
+          /> Enable Audio
         </label>
       </div>
 
@@ -215,7 +198,7 @@ export default function Home() {
         <button
           onClick={connectToRoom}
           disabled={room !== null}
-          className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+          className="bg-blue-500 text-white px-4 py-2 rounded"
         >
           Connect
         </button>
@@ -228,41 +211,28 @@ export default function Home() {
         </button>
       </div>
 
-      <p className="font-semibold">Status: {status}</p>
+      <p>Status: {status}</p>
 
       {notification && (
-        <div className="bg-yellow-400 text-black px-4 py-2 rounded shadow-md">
+        <div className="bg-yellow-400 px-4 py-2 rounded">
           {notification}
         </div>
       )}
 
       <div className="mt-4">
-        <h3 className="font-semibold">Connected Participants:</h3>
-        {participants.length === 0 ? (
-          <p>No one else connected</p>
-        ) : (
-          participants.map((name, index) => (
-            <p key={index}>{name} has connected ✅</p>
-          ))
-        )}
+        <h2>Local Video</h2>
+        <div
+          ref={localVideoRef}
+          className="border w-72 h-52"
+        ></div>
       </div>
 
-      <div className="flex gap-8 mt-6">
-        <div>
-          <h2 className="font-semibold mb-2">Local Video</h2>
-          <div
-            ref={localVideoRef}
-            className="border w-72 h-52 flex items-center justify-center"
-          ></div>
-        </div>
-
-        <div>
-          <h2 className="font-semibold mb-2">Remote Video</h2>
-          <div
-            ref={remoteVideoRef}
-            className="border w-72 h-52 flex items-center justify-center"
-          ></div>
-        </div>
+      <div className="mt-4">
+        <h2>Remote Participants</h2>
+        <div
+          ref={remoteVideoContainerRef}
+          className="grid grid-cols-2 gap-4"
+        ></div>
       </div>
     </div>
   );
