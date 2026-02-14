@@ -241,7 +241,7 @@ export default function Home() {
       )}
 
       {/* Local Video */}
-      <div className="mt-10 w-full max-w-3xl">
+      <div className="mt-12 w-full max-w-6xl">
         <h2 className="mb-4 text-lg font-semibold">Local Video</h2>
         <div
           ref={localVideoRef}
