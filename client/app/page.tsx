@@ -242,11 +242,14 @@ export default function Home() {
 
       {/* Local Video */}
       <div className="mt-12 w-full max-w-6xl">
-        <h2 className="mb-4 text-lg font-semibold">Local Video</h2>
-        <div
-          ref={localVideoRef}
-          className="w-full h-64 bg-black rounded-xl overflow-hidden shadow-lg"
-        ></div>
+        <h2 className="mb-6 text-lg font-semibold">Local Video</h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div
+            ref={localVideoRef}
+            className="relative w-full h-64 bg-black rounded-xl overflow-hidden shadow-lg"
+          ></div>
+        </div>
       </div>
 
       {/* Remote Videos */}
