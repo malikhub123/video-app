@@ -98,7 +98,7 @@ export default function Home() {
     const participantDiv = document.createElement("div");
     participantDiv.setAttribute("id", participant.identity);
     participantDiv.className =
-      "relative w-full h-64 bg-black rounded-lg overflow-hidden flex items-center justify-center";
+      "relative w-full h-64 bg-black rounded-xl overflow-hidden shadow-lg";
 
     participant.tracks.forEach((publication: any) => {
       if (publication.isSubscribed) {
@@ -162,91 +162,102 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center gap-6 p-6">
-      <h1 className="text-3xl font-bold">Twilio Video Call App</h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white flex flex-col items-center p-6">
 
-      <div className="flex flex-col gap-2 items-center">
+      <h1 className="text-4xl font-bold mb-8 tracking-wide">
+        Twilio Video Call App
+      </h1>
+
+      {/* Controls Card */}
+      <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-lg p-6 w-full max-w-md flex flex-col gap-4">
+
         <input
-          className="border p-2 w-64 text-black"
+          className="p-2 rounded bg-white text-black"
           placeholder="Your Name"
           value={userName}
           onChange={(e) => setUserName(e.target.value)}
         />
 
         <input
-          className="border p-2 w-64 text-black"
+          className="p-2 rounded bg-white text-black"
           placeholder="Room Name"
           value={roomName}
           onChange={(e) => setRoomName(e.target.value)}
         />
+
+        <div className="flex justify-between text-sm">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={enableVideo}
+              onChange={() => {
+                setEnableVideo(!enableVideo);
+                toggleVideo();
+              }}
+            />
+            Enable Video
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={enableAudio}
+              onChange={() => {
+                setEnableAudio(!enableAudio);
+                toggleAudio();
+              }}
+            />
+            Enable Audio
+          </label>
+        </div>
+
+        <div className="flex gap-4 justify-center">
+          <button
+            onClick={connectToRoom}
+            disabled={room !== null}
+            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition disabled:opacity-50"
+          >
+            Connect
+          </button>
+
+          <button
+            onClick={leaveRoom}
+            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition"
+          >
+            Leave
+          </button>
+        </div>
+
+        <p className="text-center text-sm text-gray-300">
+          Status: {status}
+        </p>
       </div>
 
-      <div className="flex gap-4">
-        <label>
-          <input
-            type="checkbox"
-            checked={enableVideo}
-            onChange={() => {
-              setEnableVideo(!enableVideo);
-              toggleVideo();
-            }}
-          /> Enable Video
-        </label>
-
-        <label>
-          <input
-            type="checkbox"
-            checked={enableAudio}
-            onChange={() => {
-              setEnableAudio(!enableAudio);
-              toggleAudio();
-            }}
-          /> Enable Audio
-        </label>
-      </div>
-
-      <div className="flex gap-4">
-        <button
-          onClick={connectToRoom}
-          disabled={room !== null}
-          className="bg-blue-600 px-4 py-2 rounded"
-        >
-          Connect
-        </button>
-
-        <button
-          onClick={leaveRoom}
-          className="bg-red-600 px-4 py-2 rounded"
-        >
-          Leave
-        </button>
-      </div>
-
-      <p>Status: {status}</p>
-
+      {/* Notification */}
       {notification && (
-        <div className="bg-yellow-400 text-black px-4 py-2 rounded">
+        <div className="mt-4 bg-yellow-400 text-black px-4 py-2 rounded-lg shadow-md">
           {notification}
         </div>
       )}
 
       {/* Local Video */}
-      <div>
-        <h2 className="mb-2">Local Video</h2>
+      <div className="mt-10 w-full max-w-3xl">
+        <h2 className="mb-4 text-lg font-semibold">Local Video</h2>
         <div
           ref={localVideoRef}
-          className="w-64 h-40 bg-black rounded-lg overflow-hidden"
+          className="w-full h-64 bg-black rounded-xl overflow-hidden shadow-lg"
         ></div>
       </div>
 
       {/* Remote Videos */}
-      <div className="w-full max-w-6xl">
-        <h2 className="mb-4">Remote Participants</h2>
+      <div className="mt-12 w-full max-w-6xl">
+        <h2 className="mb-6 text-lg font-semibold">Remote Participants</h2>
         <div
           ref={remoteVideoContainerRef}
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
         ></div>
       </div>
+
     </div>
   );
 }
