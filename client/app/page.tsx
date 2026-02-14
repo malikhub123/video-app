@@ -46,7 +46,8 @@ export default function Home() {
       setLocalTracks(tracks);
 
       const response = await axios.post(
-        "http://localhost:5000/generate-token",
+        "https://video-app-rz9w.onrender.com/generate-token"
+,
         {
           identity: userName,
           roomName,
