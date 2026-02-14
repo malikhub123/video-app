@@ -59,12 +59,16 @@ export default function Home() {
         localVideoRef.current.innerHTML = "";
         tracks.forEach((track: any) => {
           if (track.kind === "video") {
-            localVideoRef.current?.appendChild(track.attach());
+            const videoElement = track.attach();
+            videoElement.style.width = "100%";
+            videoElement.style.height = "100%";
+            videoElement.style.objectFit = "cover";
+            localVideoRef.current?.appendChild(videoElement);
           }
         });
       }
 
-      // Handle existing participants
+      // Existing participants
       connectedRoom.participants.forEach((participant: any) => {
         addParticipantVideo(participant);
       });
@@ -73,14 +77,12 @@ export default function Home() {
       connectedRoom.on("participantConnected", (participant: any) => {
         setNotification(`${participant.identity} joined`);
         setTimeout(() => setNotification(""), 3000);
-
         addParticipantVideo(participant);
       });
 
       // Participant leaves
       connectedRoom.on("participantDisconnected", (participant: any) => {
         removeParticipantVideo(participant.identity);
-
         setNotification(`${participant.identity} left`);
         setTimeout(() => setNotification(""), 3000);
       });
@@ -95,17 +97,26 @@ export default function Home() {
   const addParticipantVideo = (participant: any) => {
     const participantDiv = document.createElement("div");
     participantDiv.setAttribute("id", participant.identity);
-    participantDiv.className = "border p-2";
+    participantDiv.className =
+      "relative w-full h-64 bg-black rounded-lg overflow-hidden flex items-center justify-center";
 
     participant.tracks.forEach((publication: any) => {
       if (publication.isSubscribed) {
         const track = publication.track;
-        participantDiv.appendChild(track.attach());
+        const videoElement = track.attach();
+        videoElement.style.width = "100%";
+        videoElement.style.height = "100%";
+        videoElement.style.objectFit = "cover";
+        participantDiv.appendChild(videoElement);
       }
     });
 
     participant.on("trackSubscribed", (track: any) => {
-      participantDiv.appendChild(track.attach());
+      const videoElement = track.attach();
+      videoElement.style.width = "100%";
+      videoElement.style.height = "100%";
+      videoElement.style.objectFit = "cover";
+      participantDiv.appendChild(videoElement);
     });
 
     remoteVideoContainerRef.current?.appendChild(participantDiv);
@@ -114,9 +125,7 @@ export default function Home() {
   // ---------------- REMOVE PARTICIPANT VIDEO ----------------
   const removeParticipantVideo = (identity: string) => {
     const participantDiv = document.getElementById(identity);
-    if (participantDiv) {
-      participantDiv.remove();
-    }
+    if (participantDiv) participantDiv.remove();
   };
 
   // ---------------- TOGGLE AUDIO ----------------
@@ -153,22 +162,24 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center gap-4 p-4">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center gap-6 p-6">
       <h1 className="text-3xl font-bold">Twilio Video Call App</h1>
 
-      <input
-        className="border p-2 w-64"
-        placeholder="Your Name"
-        value={userName}
-        onChange={(e) => setUserName(e.target.value)}
-      />
+      <div className="flex flex-col gap-2 items-center">
+        <input
+          className="border p-2 w-64 text-black"
+          placeholder="Your Name"
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+        />
 
-      <input
-        className="border p-2 w-64"
-        placeholder="Room Name"
-        value={roomName}
-        onChange={(e) => setRoomName(e.target.value)}
-      />
+        <input
+          className="border p-2 w-64 text-black"
+          placeholder="Room Name"
+          value={roomName}
+          onChange={(e) => setRoomName(e.target.value)}
+        />
+      </div>
 
       <div className="flex gap-4">
         <label>
@@ -194,18 +205,18 @@ export default function Home() {
         </label>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-4">
         <button
           onClick={connectToRoom}
           disabled={room !== null}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-blue-600 px-4 py-2 rounded"
         >
           Connect
         </button>
 
         <button
           onClick={leaveRoom}
-          className="bg-red-500 text-white px-4 py-2 rounded"
+          className="bg-red-600 px-4 py-2 rounded"
         >
           Leave
         </button>
@@ -214,24 +225,26 @@ export default function Home() {
       <p>Status: {status}</p>
 
       {notification && (
-        <div className="bg-yellow-400 px-4 py-2 rounded">
+        <div className="bg-yellow-400 text-black px-4 py-2 rounded">
           {notification}
         </div>
       )}
 
-      <div className="mt-4">
-        <h2>Local Video</h2>
+      {/* Local Video */}
+      <div>
+        <h2 className="mb-2">Local Video</h2>
         <div
           ref={localVideoRef}
-          className="border w-72 h-52"
+          className="w-64 h-40 bg-black rounded-lg overflow-hidden"
         ></div>
       </div>
 
-      <div className="mt-4">
-        <h2>Remote Participants</h2>
+      {/* Remote Videos */}
+      <div className="w-full max-w-6xl">
+        <h2 className="mb-4">Remote Participants</h2>
         <div
           ref={remoteVideoContainerRef}
-          className="grid grid-cols-2 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
         ></div>
       </div>
     </div>
