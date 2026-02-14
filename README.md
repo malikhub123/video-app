@@ -63,7 +63,6 @@ video-app/
 **Backend:**
 - Node.js & Express
 - Twilio SDK
-- CORS & dotenv
 
 **Deployment:**
 - Frontend → Vercel
