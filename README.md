@@ -153,16 +153,6 @@ npm run dev
 ```
 Open: `http://localhost:3000`
 
----
-
-## 📸 Screenshots
-
-*(Add screenshots of your application here)*
-
-- Local video view
-- Two participants connected
-- Join/Leave notifications
-- Audio/Video toggle controls
 
 ---
 
